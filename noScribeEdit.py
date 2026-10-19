@@ -55,10 +55,8 @@ config_file = os.path.join(config_dir, 'editor_config.yaml')
 
 try:
     with open(config_file, 'r') as file:
-        config = yaml.safe_load(file)
-        if not config:
-            raise # config file is empty (None)        
-except: # seems we run it for the first time and there is no config file
+        config = yaml.safe_load(file) or {} # if config is None {}
+except FileNotFoundError: # seems we run it for the first time and there is no config file
     config = {}
     
 def get_config(key: str, default):
@@ -1258,8 +1256,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if start == -1:
             # The current cursor may be after the timestamped text, so retry from
             # the beginning when seeking back into an earlier part of the audio.
-            cr.setPosition(0)
-            self._set_editor_cursor(cr, ignore_during_playback=True)
             start, stop = self.find_segment(audio_position)
         return start, stop
 
@@ -1273,7 +1269,6 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 start, stop = decode_timestamp(cr.charFormat().anchorHref())
                 if start > audio_position:
-                    self._set_editor_cursor(cr, ignore_during_playback=True)
                     if self.select_current_segment():
                         return start, stop
             except:
